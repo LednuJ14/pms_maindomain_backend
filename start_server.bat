@@ -1,5 +1,5 @@
 @echo off
-echo Starting JACS Backend Server...
+echo Starting PMS Backend Server...
 echo.
 
 REM Check if virtual environment exists

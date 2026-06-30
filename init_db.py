@@ -39,7 +39,7 @@ def main() -> None:
         print("Initializing database (non-destructive)...")
 
         ensure_user(
-            email="admin@jacs-cebu.com",
+            email="admin@pms-cebu.com",
             password="Admin123!",
             role=UserRole.ADMIN,
             first_name="System",
@@ -62,7 +62,7 @@ def main() -> None:
             last_name="Tenant",
         )
 
-        print("✅ Default demo users are now present in the database.")
+        print("[OK] Default demo users are now present in the database.")
 
 
 if __name__ == "__main__":

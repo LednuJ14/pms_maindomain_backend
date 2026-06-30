@@ -1367,11 +1367,11 @@ def upload_manager_profile_image(current_user):
         )
 
         if not success:
-            return handle_api_error(400, error or "Failed to save image")
+            return handle_api_error(400, error or "Failed to save profile image")
 
-        # Public URL served by /uploads route
-        public_url = f"/uploads/users/{current_user.id}/{filename}"
-
+        # Public URL served by /uploads route or Cloudinary URL
+        public_url = filename if filename.startswith('http') else f"/uploads/users/{current_user.id}/{filename}"
+        
         # Persist on user
         current_user.profile_image_url = public_url
         db.session.commit()
@@ -1408,8 +1408,8 @@ def upload_property_image(current_user):
         )
         if not success:
             return handle_api_error(400, error or "Failed to save image")
-        # Return the public URL, matching /uploads/properties/<filename>
-        public_url = f"/uploads/properties/{filename}"
+        # Return path to save in DB (Cloudinary URL or relative path)
+        public_url = filename if filename.startswith('http') else f"/uploads/properties/{filename}"
         return jsonify({
             'message': 'Image uploaded',
             'url': public_url
@@ -1453,9 +1453,8 @@ def upload_legal_document(current_user):
         if not success:
             return handle_api_error(400, error or "Failed to save document")
         
-        # Return the server file path (relative to instance/uploads)
-        # This will be used to construct the full path when needed
-        file_path = os.path.join('legal-documents', filename)
+        # Return path to save in DB (Cloudinary URL or relative path)
+        file_path = filename if filename.startswith('http') else os.path.join('legal-documents', filename)
         
         return jsonify({
             'message': 'Document uploaded successfully',
@@ -1492,8 +1491,8 @@ def upload_unit_image(current_user):
         )
         if not success:
             return handle_api_error(400, error or "Failed to save image")
-        # Return the public URL, matching /uploads/unit-images/<filename>
-        public_url = f"/uploads/unit-images/{filename}"
+        # Return the public URL or Cloudinary URL
+        public_url = filename if filename.startswith('http') else f"/uploads/unit-images/{filename}"
         return jsonify({'message': 'Image uploaded', 'url': public_url}), 200
     except Exception as e:
         current_app.logger.error(f'Upload unit image error: {e}')

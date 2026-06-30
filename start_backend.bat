@@ -1,6 +1,6 @@
 @echo off
 echo ===============================================
-echo JACS Cebu Property Management - Backend Setup
+echo PMS Property Management System - Backend Setup
 echo ===============================================
 echo.
 
@@ -101,7 +101,7 @@ echo.
 echo API will be available at: http://localhost:5000
 echo.
 echo Default accounts:
-echo 👤 Admin: admin@jacs-cebu.com / Admin123!
+echo 👤 Admin: admin@pms-cebu.com / Admin123!
 echo 🏢 Manager: manager@example.com / Manager123!
 echo 🏠 Tenant: tenant@example.com / Tenant123!
 echo.

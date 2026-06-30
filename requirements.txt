@@ -41,6 +41,7 @@ requests>=2.32.0
 
 # Image processing
 Pillow>=9.0.0
+cloudinary>=1.40.0
 pyotp>=2.9.0
 qrcode[pil]>=7.4.2
 

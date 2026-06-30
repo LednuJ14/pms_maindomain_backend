@@ -177,7 +177,7 @@ def save_uploaded_file(file, upload_folder, allowed_extensions=None, max_size=No
             if not is_valid:
                 return False, None, mime_error or "File type validation failed"
         
-        # Check file size
+        # Check if file size
         if max_size:
             # Seek to end to get size
             file.seek(0, os.SEEK_END)
@@ -187,6 +187,27 @@ def save_uploaded_file(file, upload_folder, allowed_extensions=None, max_size=No
             if size > max_size:
                 return False, None, f"File too large. Maximum size: {max_size / 1024 / 1024:.1f}MB"
         
+        # Check if Cloudinary is configured
+        if current_app.config.get('CLOUDINARY_CLOUD_NAME'):
+            from app.utils.cloudinary_helpers import upload_to_cloudinary
+            
+            # Format folder for Cloudinary (convert backslashes to forward slashes, remove 'uploads')
+            cloudinary_folder = upload_folder.replace('\\', '/').strip('/')
+            if 'uploads/' in cloudinary_folder:
+                cloudinary_folder = cloudinary_folder.split('uploads/')[-1]
+            
+            # Make sure it doesn't just upload to root if folder is empty
+            if not cloudinary_folder:
+                cloudinary_folder = "general"
+                
+            success, secure_url, upload_error = upload_to_cloudinary(file, folder=f"jacs/{cloudinary_folder}")
+            
+            if success:
+                return True, secure_url, None
+            else:
+                return False, None, upload_error
+                
+        # Fallback to local storage
         # Generate secure filename (clean, no UUID)
         original_filename = secure_filename(file.filename)
         

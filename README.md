@@ -1,6 +1,6 @@
-# JACS Cebu Property Management - Backend API
+# PMS Property Management System - Backend API
 
-A secure and scalable Flask-based REST API for the JACS Cebu Property Management platform, featuring JWT authentication, MySQL database, subscription management, and comprehensive security measures.
+A secure and scalable Flask-based REST API for the PMS Property Management System platform, featuring JWT authentication, MySQL database, subscription management, and comprehensive security measures.
 
 ## 🚀 Features
 
@@ -40,8 +40,8 @@ A secure and scalable Flask-based REST API for the JACS Cebu Property Management
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url> JACS
-cd JACS/main-domain/backend
+git clone <repository-url> PMS
+cd PMS/main-domain/backend
 ```
 
 ### 2. Create Virtual Environment
@@ -81,7 +81,7 @@ MYSQL_HOST=localhost
 MYSQL_PORT=3306
 MYSQL_USER=your-mysql-username
 MYSQL_PASSWORD=your-mysql-password
-MYSQL_DATABASE=jacs_property_db
+MYSQL_DATABASE=pms_property_db
 
 # JWT Configuration
 JWT_SECRET_KEY=your-jwt-secret-key-change-this-in-production
@@ -98,9 +98,9 @@ MAIL_PASSWORD=your-app-password
 
 ### 6. Create MySQL Database
 ```sql
-CREATE DATABASE jacs_property_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'jacs_user'@'localhost' IDENTIFIED BY 'secure_password';
-GRANT ALL PRIVILEGES ON jacs_property_db.* TO 'jacs_user'@'localhost';
+CREATE DATABASE pms_property_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'pms_user'@'localhost' IDENTIFIED BY 'secure_password';
+GRANT ALL PRIVILEGES ON pms_property_db.* TO 'pms_user'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
@@ -184,7 +184,7 @@ After running `init_db.py`, these accounts will be available:
 
 | Role | Email | Password | Description |
 |------|-------|----------|-------------|
-| Admin | admin@jacs-cebu.com | Admin123! | System administrator |
+| Admin | admin@pms-cebu.com | Admin123! | System administrator |
 | Manager | manager@example.com | Manager123! | Property manager |
 | Tenant | tenant@example.com | Tenant123! | Sample tenant |
 

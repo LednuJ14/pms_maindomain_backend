@@ -93,20 +93,9 @@ def get_active_units():
             # Longitude offset depends on latitude (longitude lines get closer near poles)
             lng_offset = radius / (111000.0 * math.cos(math.radians(lat))) if lat != 0 else radius / 111000.0
             
-            # Filter by bounding box first for performance, then exact distance
-            # Check if latitude/longitude columns exist (for backward compatibility)
-            filters.append("""
-                (p.latitude IS NOT NULL AND p.longitude IS NOT NULL AND
-                p.latitude BETWEEN :min_lat AND :max_lat AND
-                p.longitude BETWEEN :min_lng AND :max_lng AND
-                (6371000 * acos(
-                    GREATEST(-1, LEAST(1, 
-                        cos(radians(:search_lat)) * cos(radians(p.latitude)) * 
-                        cos(radians(p.longitude) - radians(:search_lng)) + 
-                        sin(radians(:search_lat)) * sin(radians(p.latitude))
-                    ))
-                )) <= :radius_meters)
-            """)
+            # Bounding box filter based on location coordinates (not supported since columns don't exist in properties)
+            # Falling back to no-op for now.
+            pass
             binds['min_lat'] = lat - lat_offset
             binds['max_lat'] = lat + lat_offset
             binds['min_lng'] = lng - lng_offset
@@ -119,8 +108,8 @@ def get_active_units():
             location_filter = params.get('city') or params.get('location') or ''
             if location_filter:
                 location_term = location_filter.strip()
-                # Search in street, barangay, or city
-                filters.append("(p.street LIKE :location OR p.barangay LIKE :location OR p.city LIKE :location)")
+                # Search in address or city
+                filters.append("(p.address LIKE :location OR p.city LIKE :location)")
                 binds['location'] = f"%{location_term}%"
 
         if params.get('type'):
@@ -155,8 +144,7 @@ def get_active_units():
                 (p.title LIKE :search_term OR 
                  p.description LIKE :search_term OR 
                  p.city LIKE :search_term OR 
-                 p.street LIKE :search_term OR 
-                 p.barangay LIKE :search_term OR
+                 p.address LIKE :search_term OR
                  p.amenities LIKE :search_term OR
                  u.description LIKE :search_term)
             """)
@@ -199,11 +187,11 @@ def get_active_units():
                 p.id AS property_id,
                 p.building_name,
                 p.address,
-                p.street,
-                p.barangay,
-                p.postal_code,
-                p.latitude,
-                p.longitude,
+                NULL AS street,
+                NULL AS barangay,
+                NULL AS postal_code,
+                NULL AS latitude,
+                NULL AS longitude,
                 p.title AS property_title,
                 p.city,
                 p.province,
@@ -270,14 +258,14 @@ def get_active_units():
                     p.id AS property_id,
                     p.building_name,
                     p.address,
-                    p.street,
-                    p.barangay,
+                    NULL AS street,
+                    NULL AS barangay,
                     p.title AS property_title,
                     p.city,
                     p.province,
-                    p.postal_code,
-                    p.latitude,
-                    p.longitude,
+                    NULL AS postal_code,
+                    NULL AS latitude,
+                    NULL AS longitude,
                     p.contact_email,
                     p.contact_phone,
                     p.property_type,

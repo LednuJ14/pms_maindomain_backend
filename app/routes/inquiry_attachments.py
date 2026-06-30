@@ -153,9 +153,26 @@ def upload_attachment(current_user, inquiry_id):
             
             # Save file
             try:
-                # Ensure directory exists
-                os.makedirs(os.path.dirname(file_path), exist_ok=True)
-                file.save(file_path)
+                # Check if Cloudinary is configured
+                if current_app.config.get('CLOUDINARY_CLOUD_NAME'):
+                    from app.utils.cloudinary_helpers import upload_to_cloudinary
+                    
+                    file.seek(0)
+                    success, secure_url, upload_error = upload_to_cloudinary(
+                        file, 
+                        folder=f"jacs/inquiries/{inquiry_id}"
+                    )
+                    
+                    if not success:
+                        errors.append(f'{filename}: Failed to upload to Cloudinary - {upload_error}')
+                        continue
+                        
+                    file_path = secure_url
+                else:
+                    # Ensure directory exists
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    file.seek(0)
+                    file.save(file_path)
                 
                 # Get MIME type
                 mime_type = file.content_type or 'application/octet-stream'
@@ -333,22 +350,26 @@ def get_attachments(current_user, inquiry_id):
                 # Verify file exists before including in response
                 # This prevents 404 errors on the frontend for missing files
                 if file_path:
-                    file_path = os.path.normpath(file_path)
-                    
-                    # Check if file exists
-                    file_exists = os.path.exists(file_path)
-                    
-                    # If not absolute path, try relative to UPLOAD_FOLDER
-                    if not file_exists and not os.path.isabs(file_path):
-                        alternative_path = os.path.join(UPLOAD_FOLDER, str(inquiry_id), os.path.basename(file_path))
-                        if os.path.exists(alternative_path):
-                            file_path = alternative_path
-                            file_exists = True
-                    
-                    # Only include attachment if file exists
-                    if not file_exists:
-                        current_app.logger.warning(f'Attachment {row.get("id")} file not found at: {file_path}')
-                        continue  # Skip this attachment - file doesn't exist
+                    if file_path.startswith('http'):
+                        # It's a Cloudinary URL, assume it exists
+                        pass
+                    else:
+                        file_path = os.path.normpath(file_path)
+                        
+                        # Check if file exists
+                        file_exists = os.path.exists(file_path)
+                        
+                        # If not absolute path, try relative to UPLOAD_FOLDER
+                        if not file_exists and not os.path.isabs(file_path):
+                            alternative_path = os.path.join(UPLOAD_FOLDER, str(inquiry_id), os.path.basename(file_path))
+                            if os.path.exists(alternative_path):
+                                file_path = alternative_path
+                                file_exists = True
+                        
+                        # Only include attachment if file exists
+                        if not file_exists:
+                            current_app.logger.warning(f'Attachment {row.get("id")} file not found at: {file_path}')
+                            continue  # Skip this attachment - file doesn't exist
                 
                 attachments_data.append({
                     'id': row.get('id'),
@@ -450,6 +471,10 @@ def download_attachment(current_user, attachment_id):
         
         if not file_path:
             return handle_api_error(404, 'File path not found')
+            
+        if file_path.startswith('http'):
+            from flask import redirect
+            return redirect(file_path)
         
         # Normalize the path (handle Windows paths correctly)
         file_path = os.path.normpath(file_path)

@@ -456,12 +456,12 @@ def upload_profile_image(current_user):
         )
 
         if not success:
-            return handle_api_error(400, error or "Failed to save image")
+            return handle_api_error(400, error or "Failed to save profile image")
 
-        # Public URL served by /uploads route
-        public_url = f"/uploads/users/{current_user.id}/{filename}"
-
-        # Persist on user
+        # Public URL served by /uploads route or Cloudinary URL
+        public_url = filename if filename.startswith('http') else f"/uploads/users/{current_user.id}/{filename}"
+        
+        # Update user record
         current_user.profile_image_url = public_url
         db.session.commit()
 
