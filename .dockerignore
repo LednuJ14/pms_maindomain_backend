@@ -1,0 +1,44 @@
+# Version control
+.git
+.gitignore
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Python
+__pycache__
+**/__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.pytest_cache
+.coverage
+htmlcov
+
+# Virtual environments
+venv
+.venv
+env
+
+# IDE
+.vscode
+.idea
+.DS_Store
+
+# Instance folder (local SQLite, secrets)
+instance
+
+# Dev scripts
+start_backend.bat
+start_backend.ps1
+start_backend.sh
+start_server.bat
+
+# Docs
+README.md
+SWAGGER_TESTING_GUIDE.md
+
+# Environment (secrets — pass via docker run --env-file)
+.env
+env.example
