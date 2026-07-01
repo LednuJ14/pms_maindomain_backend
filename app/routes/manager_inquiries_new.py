@@ -196,6 +196,20 @@ def get_manager_inquiries(current_user):
                     'created_at': safe_isoformat(msg_row.get('created_at'))
                 })
             
+            # Get pre-qualification details if available
+            pre_qual_row = db.session.execute(text(
+                "SELECT income_bracket, employment_status, has_pets, move_in_date FROM pre_qualification_data WHERE inquiry_id = :iid"
+            ), {'iid': inquiry.get('id')}).mappings().first()
+            
+            pre_qual_data = None
+            if pre_qual_row:
+                pre_qual_data = {
+                    'income': pre_qual_row.get('income_bracket'),
+                    'employment': pre_qual_row.get('employment_status'),
+                    'pets': bool(pre_qual_row.get('has_pets')),
+                    'move_in_date': safe_isoformat(pre_qual_row.get('move_in_date'))
+                }
+                
             inquiry_dict = {
                 'id': inquiry.get('id'),
                 'property_id': inquiry.get('property_id'),
@@ -212,7 +226,8 @@ def get_manager_inquiries(current_user):
                 'unit_id': inquiry.get('unit_id'),
                 'unit_name': inquiry.get('unit_name'),
                 'property': property_data,
-                'tenant': tenant_data
+                'tenant': tenant_data,
+                'pre_qualification': pre_qual_data
             }
             
             inquiry_data.append(inquiry_dict)
@@ -1400,3 +1415,75 @@ def delete_unit(current_user, unit_id):
         db.session.rollback()
         current_app.logger.error(f'Delete unit error: {e}')
         return handle_api_error(500, f"Failed to delete unit: {str(e)}")
+
+
+@manager_inquiries_bp.route('/<int:inquiry_id>/status', methods=['PUT'])
+@manager_required
+def update_inquiry_status(current_user, inquiry_id):
+    try:
+        data = request.get_json()
+        new_status = data.get('status')
+        if not new_status:
+            return jsonify({'error': 'Status is required'}), 400
+            
+        inquiry = Inquiry.query.get_or_404(inquiry_id)
+        if inquiry.property_manager_id != current_user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Update status
+        inquiry.status = InquiryStatus(new_status)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Status updated successfully',
+            'inquiry': inquiry.to_dict()
+        }), 200
+    except ValueError:
+        return jsonify({'error': 'Invalid status'}), 400
+    except Exception as e:
+        db.session.rollback()
+        print(f'Error updating status: {str(e)}')
+        return jsonify({'error': 'Failed to update status'}), 500
+
+@manager_inquiries_bp.route('/<int:inquiry_id>/viewing', methods=['POST', 'PUT'])
+@manager_required
+def schedule_viewing(current_user, inquiry_id):
+    from app.models.inquiry import ViewingSchedule
+    try:
+        data = request.get_json()
+        scheduled_at_str = data.get('scheduled_at')
+        if not scheduled_at_str:
+            return jsonify({'error': 'Scheduled time is required'}), 400
+            
+        inquiry = Inquiry.query.get_or_404(inquiry_id)
+        if inquiry.property_manager_id != current_user.id:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        scheduled_at = datetime.fromisoformat(scheduled_at_str.replace('Z', '+00:00'))
+        
+        # Check if schedule exists
+        schedule = ViewingSchedule.query.filter_by(inquiry_id=inquiry_id).first()
+        if schedule:
+            schedule.scheduled_at = scheduled_at
+            schedule.status = data.get('status', 'scheduled')
+        else:
+            schedule = ViewingSchedule(
+                inquiry_id=inquiry_id,
+                scheduled_at=scheduled_at
+            )
+            db.session.add(schedule)
+            
+        # Also update inquiry status to VIEWING_SCHEDULED if it is pending/read
+        if inquiry.status in [InquiryStatus.PENDING, InquiryStatus.READ]:
+            inquiry.status = InquiryStatus.VIEWING_SCHEDULED
+            
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Viewing scheduled successfully',
+            'inquiry_status': str(inquiry.status.value)
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f'Error scheduling viewing: {str(e)}')
+        return jsonify({'error': 'Failed to schedule viewing'}), 500

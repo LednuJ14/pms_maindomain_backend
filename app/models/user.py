@@ -30,9 +30,10 @@ class User(db.Model):
     
     # Authentication fields
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
+    username = db.Column(db.String(80), unique=True, nullable=True, index=True)  # Added from sub-domain
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.TENANT)
-    status = db.Column(db.Enum(UserStatus), nullable=False, default=UserStatus.PENDING_VERIFICATION)
+    status = db.Column(db.Enum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
     
     # Profile fields
     first_name = db.Column(db.String(50), nullable=False)
@@ -49,11 +50,15 @@ class User(db.Model):
     postal_code = db.Column(db.String(20))
     country = db.Column(db.String(100), default='Philippines')
     
+    # Emergency contact (from sub-domain)
+    emergency_contact_name = db.Column(db.String(100))
+    emergency_contact_phone = db.Column(db.String(20))
+    
     # Bio field for user description
     bio = db.Column(db.Text)
     
     # Verification fields
-    email_verified = db.Column(db.Boolean, default=False)
+    email_verified = db.Column(db.Boolean, default=True)
     email_verification_token = db.Column(db.String(255))
     # phone_verified removed - not used in system
     

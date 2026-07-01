@@ -157,6 +157,20 @@ def get_tenant_inquiries(current_user):
                     'created_at': safe_isoformat(msg_row.get('created_at'))
                 })
             
+            # Get pre-qualification details if available
+            pre_qual_row = db.session.execute(text(
+                "SELECT income_bracket, employment_status, has_pets, move_in_date FROM pre_qualification_data WHERE inquiry_id = :iid"
+            ), {'iid': inquiry.get('id')}).mappings().first()
+            
+            pre_qual_data = None
+            if pre_qual_row:
+                pre_qual_data = {
+                    'income': pre_qual_row.get('income_bracket'),
+                    'employment': pre_qual_row.get('employment_status'),
+                    'pets': bool(pre_qual_row.get('has_pets')),
+                    'move_in_date': safe_isoformat(pre_qual_row.get('move_in_date'))
+                }
+                
             inquiry_dict = {
                 'id': inquiry.get('id'),
                 'property_id': inquiry.get('property_id'),
@@ -172,7 +186,8 @@ def get_tenant_inquiries(current_user):
                 'read_at': safe_isoformat(inquiry.get('read_at')),
                 'unit_name': inquiry.get('unit_name'),
                 'property': property_data,
-                'property_manager': manager_data
+                'property_manager': manager_data,
+                'pre_qualification': pre_qual_data
             }
             
             inquiry_data.append(inquiry_dict)
@@ -348,6 +363,52 @@ def start_inquiry(current_user):
             ), params)
             db.session.commit()
             new_id = result.lastrowid or db.session.execute(text('SELECT LAST_INSERT_ID()')).scalar()
+            
+            # Phase 3 logic: Save PreQualificationData if provided
+            pre_qual = data.get('pre_qualification')
+            if pre_qual:
+                db.session.execute(text("""
+                    INSERT INTO pre_qualification_data (
+                        inquiry_id, income_bracket, employment_status, has_pets, move_in_date, created_at
+                    ) VALUES (
+                        :inq_id, :income, :employment, :pets, :move_in, NOW()
+                    )
+                """), {
+                    'inq_id': new_id,
+                    'income': pre_qual.get('income_bracket'),
+                    'employment': pre_qual.get('employment_status'),
+                    'pets': bool(pre_qual.get('has_pets', False)),
+                    'move_in': pre_qual.get('move_in_date')
+                })
+            
+            # Phase 3 logic: Save ViewingSchedule if provided
+            viewing = data.get('viewing_schedule')
+            if viewing and viewing.get('scheduled_at'):
+                db.session.execute(text("""
+                    INSERT INTO viewing_schedules (
+                        inquiry_id, scheduled_at, status, created_at
+                    ) VALUES (
+                        :inq_id, :sched_at, 'scheduled', NOW()
+                    )
+                """), {
+                    'inq_id': new_id,
+                    'sched_at': viewing.get('scheduled_at').replace('T', ' ').replace('Z', '')
+                })
+                # If viewing schedule is set upon creation, we can update the status
+                db.session.execute(text("""
+                    UPDATE inquiries SET status = 'viewing_scheduled' WHERE id = :inq_id
+                """), {'inq_id': new_id})
+                inquiry_dict_status = 'viewing_scheduled'
+            elif pre_qual:
+                # If pre_qual is provided but no viewing, status is pre_qualified
+                db.session.execute(text("""
+                    UPDATE inquiries SET status = 'pre_qualified' WHERE id = :inq_id
+                """), {'inq_id': new_id})
+                inquiry_dict_status = 'pre_qualified'
+            else:
+                inquiry_dict_status = 'pending'
+                
+            db.session.commit()
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"Database error creating inquiry: {str(e)}")
@@ -385,7 +446,7 @@ def start_inquiry(current_user):
             'tenant_id': int(current_user.id),
             'property_manager_id': int(prop_row.get('owner_id')) if prop_row.get('owner_id') is not None else None,
             'inquiry_type': 'rental_inquiry',
-            'status': 'pending',
+            'status': inquiry_dict_status,
             'message': message,
             'tenant': {
                 'id': current_user.id,

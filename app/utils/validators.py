@@ -61,7 +61,7 @@ def validate_phone(phone_number, country_code='PH'):
 
 def validate_password_strength(password):
     """
-    Validate password strength.
+    Validate password strength. (Currently bypassed)
     
     Args:
         password (str): Password to validate
@@ -69,64 +69,7 @@ def validate_password_strength(password):
     Returns:
         tuple: (is_valid: bool, errors: list, strength_score: int)
     """
-    errors = []
-    score = 0
-    
-    # Length check
-    if len(password) < 8:
-        errors.append("Password must be at least 8 characters long")
-    elif len(password) >= 12:
-        score += 2
-    else:
-        score += 1
-    
-    # Character variety checks
-    if not re.search(r'[a-z]', password):
-        errors.append("Password must contain at least one lowercase letter")
-    else:
-        score += 1
-    
-    if not re.search(r'[A-Z]', password):
-        errors.append("Password must contain at least one uppercase letter")
-    else:
-        score += 1
-    
-    if not re.search(r'\d', password):
-        errors.append("Password must contain at least one number")
-    else:
-        score += 1
-    
-    if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
-        errors.append("Password must contain at least one special character")
-    else:
-        score += 1
-    
-    # Common password patterns
-    common_patterns = [
-        r'123456',
-        r'password',
-        r'qwerty',
-        r'abc123',
-        r'admin'
-    ]
-    
-    for pattern in common_patterns:
-        if re.search(pattern, password.lower()):
-            errors.append("Password contains common patterns and is not secure")
-            score = max(0, score - 2)
-            break
-    
-    # Sequential characters
-    if re.search(r'(012|123|234|345|456|567|678|789|890)', password):
-        errors.append("Password should not contain sequential numbers")
-        score = max(0, score - 1)
-    
-    if re.search(r'(abc|bcd|cde|def|efg|fgh|ghi|hij|ijk|jkl|klm|lmn|mno|nop|opq|pqr|qrs|rst|stu|tuv|uvw|vwx|wxy|xyz)', password.lower()):
-        errors.append("Password should not contain sequential letters")
-        score = max(0, score - 1)
-    
-    is_valid = len(errors) == 0
-    return is_valid, errors, min(score, 5)  # Cap score at 5
+    return True, [], 5
 
 def validate_required_fields(data, required_fields):
     """

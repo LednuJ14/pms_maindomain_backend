@@ -14,6 +14,9 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_mail import Mail
 from flasgger import Swagger
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -52,6 +55,18 @@ def create_app(config_name=None):
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    # Initialize Cloudinary
+    if app.config.get('CLOUDINARY_CLOUD_NAME'):
+        cloudinary.config(
+            cloud_name=app.config.get('CLOUDINARY_CLOUD_NAME'),
+            api_key=app.config.get('CLOUDINARY_API_KEY'),
+            api_secret=app.config.get('CLOUDINARY_API_SECRET'),
+            secure=True
+        )
+        app.logger.info("Cloudinary configured successfully")
+    else:
+        app.logger.warning("Cloudinary credentials not found. File uploads to Cloudinary will fail.")
     # Configure CORS with environment-based origins
     raw_origins = app.config.get('CORS_ORIGINS', [])
     
@@ -174,7 +189,7 @@ def create_app(config_name=None):
     swagger_template = {
         "swagger": "2.0",
         "info": {
-            "title": "JACS Property Platform API",
+            "title": "PMS Property Platform API",
             "description": "Interactive API documentation for the main-domain backend.\n\n"
                            "## Authentication\n"
                            "Most endpoints require JWT authentication. Include the token in the Authorization header:\n"
@@ -198,8 +213,8 @@ def create_app(config_name=None):
                            "Rate limit information is included in response headers.",
             "version": "1.0.0",
             "contact": {
-                "name": "JACS Support",
-                "email": "support@jacs-cebu.com"
+                "name": "PMS Support",
+                "email": "support@pms-cebu.com"
             }
         },
         "basePath": "/",

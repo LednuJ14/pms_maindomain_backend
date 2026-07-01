@@ -35,7 +35,7 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.utcnow().isoformat() + 'Z',
-        'service': 'jacs-property-platform'
+        'service': 'pms-property-platform'
     }), 200
 
 

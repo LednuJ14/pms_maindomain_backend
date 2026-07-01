@@ -1,4 +1,4 @@
 """
-Test package for JACS Property Platform
+Test package for PMS Property Platform
 """
 

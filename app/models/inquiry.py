@@ -7,12 +7,22 @@ import enum
 
 class InquiryStatus(enum.Enum):
     """Inquiry status enumeration."""
+    # Base statuses
     PENDING = "pending"
     READ = "read"
     RESPONDED = "responded"
     CLOSED = "closed"
     SPAM = "spam"
     ASSIGNED = "assigned"
+    
+    # Advanced Pipeline Statuses
+    PRE_QUALIFIED = "pre_qualified"
+    VIEWING_SCHEDULED = "viewing_scheduled"
+    APPLICATION_SUBMITTED = "application_submitted"
+    BACKGROUND_CHECK = "background_check"
+    APPROVED = "approved"
+    CONTRACT_SENT = "contract_sent"
+    REJECTED = "rejected"
 
 class InquiryType(enum.Enum):
     """Inquiry type enumeration."""
@@ -51,9 +61,9 @@ class Inquiry(db.Model):
     read_at = db.Column(db.DateTime)
     
     # Relationships
-    property = db.relationship('Property', lazy='select')
-    tenant = db.relationship('User', foreign_keys=[tenant_id], lazy='select')
-    property_manager = db.relationship('User', foreign_keys=[property_manager_id], lazy='select')
+    property = db.relationship('Property', lazy='select', overlaps="inquiries")
+    tenant = db.relationship('User', foreign_keys=[tenant_id], lazy='select', overlaps="inquiry_tenant,sent_inquiries")
+    property_manager = db.relationship('User', foreign_keys=[property_manager_id], lazy='select', overlaps="inquiry_manager,received_inquiries")
     # Note: attachments backref is automatically created by InquiryAttachment model
     # Note: messages backref is automatically created by InquiryMessage model
     
@@ -188,3 +198,29 @@ class Inquiry(db.Model):
         """String representation of inquiry."""
         tenant_name = self.tenant.get_full_name() if self.tenant else 'Unknown'
         return f'<Inquiry {self.id} - {tenant_name} for Property {self.property_id}>'
+
+class ViewingSchedule(db.Model):
+    """Model to track viewing appointments for an inquiry."""
+    __tablename__ = 'viewing_schedules'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    inquiry_id = db.Column(db.Integer, db.ForeignKey('inquiries.id'), nullable=False)
+    scheduled_at = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(50), default="scheduled")  # scheduled, completed, cancelled
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    inquiry = db.relationship('Inquiry', backref=db.backref('viewing_schedules', lazy=True))
+
+class PreQualificationData(db.Model):
+    """Model to track pre-qualification answers."""
+    __tablename__ = 'pre_qualification_data'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    inquiry_id = db.Column(db.Integer, db.ForeignKey('inquiries.id'), nullable=False)
+    income_bracket = db.Column(db.String(100))
+    employment_status = db.Column(db.String(100))
+    has_pets = db.Column(db.Boolean, default=False)
+    move_in_date = db.Column(db.Date)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    
+    inquiry = db.relationship('Inquiry', backref=db.backref('pre_qualification_data', uselist=False, lazy=True))

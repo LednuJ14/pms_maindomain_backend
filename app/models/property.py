@@ -74,6 +74,7 @@ class Property(db.Model):
     portal_enabled = db.Column(db.Boolean, default=False)
     portal_subdomain = db.Column(db.String(100))
     display_settings = db.Column(db.Text)  # JSON string for sub-domain display settings
+    contract_template_url = db.Column(db.String(500), nullable=True)
     
     # Property details - bedrooms field removed (not in database schema)
     
@@ -159,6 +160,7 @@ class Property(db.Model):
             'created_at': safe_iso(self.created_at),
             'updated_at': safe_iso(self.updated_at),
             'owner_id': self.owner_id,
+            'contract_template_url': getattr(self, 'contract_template_url', None)
             # approved_by and approved_at fields removed (not in database schema)
         }
         
@@ -175,3 +177,16 @@ class Property(db.Model):
     def __repr__(self):
         """String representation of property."""
         return f'<Property {self.title} - {self.city}>'
+
+# Stub models to satisfy foreign key relationships in main domain
+class Unit(db.Model):
+    """Stub model for units table."""
+    __tablename__ = 'units'
+    id = db.Column(db.Integer, primary_key=True)
+    property_id = db.Column(db.Integer, db.ForeignKey('properties.id'), nullable=False)
+
+class TenantUnit(db.Model):
+    """Stub model for tenant_units table."""
+    __tablename__ = 'tenant_units'
+    id = db.Column(db.Integer, primary_key=True)
+    unit_id = db.Column(db.Integer, db.ForeignKey('units.id'), nullable=False)

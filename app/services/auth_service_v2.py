@@ -80,11 +80,12 @@ class AuthServiceV2:
         if 'address' in payload and payload['address']:
             user.address = payload['address'].strip()
 
-        user.status = UserStatus.PENDING_VERIFICATION
+        user.status = UserStatus.ACTIVE
+        user.email_verified = True
         
-        # Generate verification token BEFORE creating user (for tenants and managers)
-        if role in [UserRole.TENANT, UserRole.MANAGER]:
-            user.generate_email_verification_token()
+        # Email verification disabled for now
+        # if role in [UserRole.TENANT, UserRole.MANAGER]:
+        #     user.generate_email_verification_token()
         
         self.users.create(user)
         self.users.flush()  # obtain user.id
@@ -119,19 +120,19 @@ class AuthServiceV2:
             current_app.logger.error(f"Failed to commit user registration: {e}")
             raise AuthDomainError('Registration failed')
 
-        # Send verification email for tenants and managers
-        if role in [UserRole.TENANT, UserRole.MANAGER]:
-            try:
-                # Token is already generated, just send the email
-                self.send_verification_email(user)
-            except Exception as e:
-                current_app.logger.error(f"Failed to send verification email to {user.email if user else 'unknown'}: {e}")
-                # Don't fail registration if email fails, just log it
+        # Send verification email for tenants and managers (Disabled for now)
+        # if role in [UserRole.TENANT, UserRole.MANAGER]:
+        #     try:
+        #         # Token is already generated, just send the email
+        #         self.send_verification_email(user)
+        #     except Exception as e:
+        #         current_app.logger.error(f"Failed to send verification email to {user.email if user else 'unknown'}: {e}")
+        #         # Don't fail registration if email fails, just log it
 
         return {
             'message': 'User registered successfully',
             'user': user.to_dict(),
-            'next_steps': ['Verify your email address', 'Complete your profile', 'Start using the platform'],
+            'next_steps': ['Complete your profile', 'Start using the platform'],
         }
 
     # Login
@@ -316,12 +317,12 @@ class AuthServiceV2:
         # Send email
         try:
             msg = Message(
-                subject="Verify Your Email - JACS Cebu Property Management",
+                subject="Verify Your Email - PMS Property Management System",
                 recipients=[user.email],
                 html=f"""
                 <html>
                 <body>
-                    <h2>Welcome to JACS Cebu Property Management!</h2>
+                    <h2>Welcome to PMS Property Management System!</h2>
                     <p>Hello {user.first_name},</p>
                     <p>Thank you for registering with us. Please verify your email address by clicking the link below:</p>
                     <p><a href="{verification_url}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email Address</a></p>
@@ -330,12 +331,12 @@ class AuthServiceV2:
                     <p>This link will expire in 24 hours.</p>
                     <p>If you didn't create this account, please ignore this email.</p>
                     <br>
-                    <p>Best regards,<br>JACS Cebu Property Management Team</p>
+                    <p>Best regards,<br>PMS Property Management System Team</p>
                 </body>
                 </html>
                 """,
                 body=f"""
-                Welcome to JACS Cebu Property Management!
+                Welcome to PMS Property Management System!
                 
                 Hello {user.first_name},
                 
@@ -348,7 +349,7 @@ class AuthServiceV2:
                 If you didn't create this account, please ignore this email.
                 
                 Best regards,
-                JACS Cebu Property Management Team
+                PMS Property Management System Team
                 """
             )
             mail.send(msg)
@@ -536,7 +537,7 @@ class AuthServiceV2:
             reset_url = f"{current_app.config.get('FRONTEND_URL', 'http://localhost:3000')}/reset-password?token={user.password_reset_token}&email={user.email}"
             
             msg = Message(
-                subject='Reset Your Password - JACS Property Management',
+                subject='Reset Your Password - PMS Property Management System',
                 sender=current_app.config['MAIL_DEFAULT_SENDER'],
                 recipients=[user.email]
             )
@@ -544,7 +545,7 @@ class AuthServiceV2:
             msg.html = f"""
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                 <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); padding: 30px; text-align: center;">
-                    <h1 style="color: white; margin: 0; font-size: 24px;">JACS Property Management</h1>
+                    <h1 style="color: white; margin: 0; font-size: 24px;">PMS Property Management System</h1>
                     <p style="color: #d1d5db; margin: 5px 0 0 0;">Password Reset Request</p>
                 </div>
                 
@@ -556,7 +557,7 @@ class AuthServiceV2:
                     </p>
                     
                     <p style="color: #4b5563; line-height: 1.6; margin-bottom: 25px;">
-                        We received a request to reset your password for your JACS Property Management account. 
+                        We received a request to reset your password for your PMS Property Management System account. 
                         If you made this request, click the button below to reset your password:
                     </p>
                     
@@ -589,7 +590,7 @@ class AuthServiceV2:
                 
                 <div style="background: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                     <p style="color: #6b7280; font-size: 12px; margin: 0;">
-                        © 2025 JACS Property Management. All rights reserved.
+                        © 2025 PMS Property Management System. All rights reserved.
                     </p>
                 </div>
             </div>

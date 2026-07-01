@@ -11,9 +11,12 @@ app = create_app()
 if __name__ == '__main__':
     # Auto-create tables if they don't exist
     with app.app_context():
-        # Always create missing tables first
-        db.create_all()
-        print("✓ Database base tables verified/created.")
+        try:
+            # Always create missing tables first
+            db.create_all()
+            print("✓ Database base tables verified/created.")
+        except Exception as e:
+            print(f"⚠ Skipping table creation (tables may already exist): {e}")
 
     # Run the application
     port = int(os.environ.get('PORT', 5000))

@@ -82,7 +82,7 @@ def list_properties(current_user):
                 'total_units': row.total_units,
                 'owner_id': row.owner_id,
                 'building_name': row.building_name,
-                'subdomain': row.portal_subdomain,  # Map portal_subdomain to subdomain
+                'subdomain': row.portal_subdomain if str(row.status).lower() not in ['declined', 'disapproved', 'rejected'] else None,
                 'contact_person': row.contact_person,
                 'contact_email': row.contact_email,
                 'contact_phone': row.contact_phone,
@@ -340,7 +340,7 @@ def create_property(current_user):
             'total_units': property_row.total_units,
             'owner_id': property_row.owner_id,
             'building_name': property_row.building_name,
-            'subdomain': getattr(property_row, 'portal_subdomain', None),
+            'subdomain': getattr(property_row, 'portal_subdomain', None) if str(getattr(property_row, 'status', '')).lower() not in ['declined', 'disapproved', 'rejected'] else None,
             'contact_person': property_row.contact_person,
             'contact_email': property_row.contact_email,
             'contact_phone': property_row.contact_phone,
@@ -564,8 +564,8 @@ def get_my_properties(current_user):
                         'status': (row.status or '').upper().replace(' ', '_') if row.status else 'INACTIVE',  # Normalize to uppercase with underscores
                         'created_at': row.created_at.isoformat() if row.created_at else None,
                         'updated_at': row.updated_at.isoformat() if row.updated_at else None,
-                        'portal_subdomain': getattr(row, 'portal_subdomain', None),
-                        'subdomain': getattr(row, 'portal_subdomain', None),  # Add alias for frontend compatibility
+                        'portal_subdomain': getattr(row, 'portal_subdomain', None) if str(getattr(row, 'status', '')).lower() not in ['declined', 'disapproved', 'rejected'] else None,
+                        'subdomain': getattr(row, 'portal_subdomain', None) if str(getattr(row, 'status', '')).lower() not in ['declined', 'disapproved', 'rejected'] else None,
                         'portal_enabled': getattr(row, 'portal_enabled', False),
                         'images': images,
                         'amenities': amenities
@@ -950,6 +950,9 @@ def update_property(current_user, property_id):
         if 'amenities' in data:
             update_fields.append('amenities = :amenities')
             update_values['amenities'] = data['amenities']
+        if 'contract_template_url' in data:
+            update_fields.append('contract_template_url = :contract_template_url')
+            update_values['contract_template_url'] = data['contract_template_url']
         
         # Always update the updated_at timestamp
         update_fields.append('updated_at = NOW()')
@@ -980,7 +983,7 @@ def update_property(current_user, property_id):
                    street, barangay, city, province, postal_code, latitude, longitude,
                    total_units, monthly_rent, 
                    furnishing, status, contact_person, contact_phone, contact_email, images, 
-                   legal_documents, amenities, created_at, updated_at, owner_id
+                   legal_documents, amenities, created_at, updated_at, owner_id, contract_template_url
             FROM properties 
             WHERE id = :property_id
         """)
@@ -1014,7 +1017,8 @@ def update_property(current_user, property_id):
                 'amenities': property_result.amenities,
                 'created_at': property_result.created_at.isoformat() if property_result.created_at else None,
                 'updated_at': property_result.updated_at.isoformat() if property_result.updated_at else None,
-                'owner_id': property_result.owner_id
+                'owner_id': property_result.owner_id,
+                'contract_template_url': getattr(property_result, 'contract_template_url', None)
             }
         else:
             property_data = {'id': property_id}
@@ -1367,11 +1371,11 @@ def upload_manager_profile_image(current_user):
         )
 
         if not success:
-            return handle_api_error(400, error or "Failed to save image")
+            return handle_api_error(400, error or "Failed to save profile image")
 
-        # Public URL served by /uploads route
-        public_url = f"/uploads/users/{current_user.id}/{filename}"
-
+        # Public URL served by /uploads route or Cloudinary URL
+        public_url = filename if filename.startswith('http') else f"/uploads/users/{current_user.id}/{filename}"
+        
         # Persist on user
         current_user.profile_image_url = public_url
         db.session.commit()
@@ -1408,8 +1412,8 @@ def upload_property_image(current_user):
         )
         if not success:
             return handle_api_error(400, error or "Failed to save image")
-        # Return the public URL, matching /uploads/properties/<filename>
-        public_url = f"/uploads/properties/{filename}"
+        # Return path to save in DB (Cloudinary URL or relative path)
+        public_url = filename if filename.startswith('http') else f"/uploads/properties/{filename}"
         return jsonify({
             'message': 'Image uploaded',
             'url': public_url
@@ -1453,9 +1457,8 @@ def upload_legal_document(current_user):
         if not success:
             return handle_api_error(400, error or "Failed to save document")
         
-        # Return the server file path (relative to instance/uploads)
-        # This will be used to construct the full path when needed
-        file_path = os.path.join('legal-documents', filename)
+        # Return path to save in DB (Cloudinary URL or relative path)
+        file_path = filename if filename.startswith('http') else os.path.join('legal-documents', filename)
         
         return jsonify({
             'message': 'Document uploaded successfully',
@@ -1492,8 +1495,8 @@ def upload_unit_image(current_user):
         )
         if not success:
             return handle_api_error(400, error or "Failed to save image")
-        # Return the public URL, matching /uploads/unit-images/<filename>
-        public_url = f"/uploads/unit-images/{filename}"
+        # Return the public URL or Cloudinary URL
+        public_url = filename if filename.startswith('http') else f"/uploads/unit-images/{filename}"
         return jsonify({'message': 'Image uploaded', 'url': public_url}), 200
     except Exception as e:
         current_app.logger.error(f'Upload unit image error: {e}')

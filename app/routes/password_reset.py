@@ -35,7 +35,7 @@ def send_reset_email(user, reset_token):
         <html>
         <head>
             <meta charset="utf-8">
-            <title>Password Reset - JACS Property Management</title>
+            <title>Password Reset - PMS Property Management System</title>
             <style>
                 body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
                 .container { max-width: 600px; margin: 0 auto; padding: 20px; }
@@ -49,13 +49,13 @@ def send_reset_email(user, reset_token):
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>🏠 JACS Property Management</h1>
+                    <h1>🏠 PMS Property Management System</h1>
                     <h2>Password Reset Request</h2>
                 </div>
                 <div class="content">
                     <p>Hello <strong>{{ user_name }}</strong>,</p>
                     
-                    <p>We received a request to reset your password for your JACS Property Management account.</p>
+                    <p>We received a request to reset your password for your PMS Property Management System account.</p>
                     
                     <p>Click the button below to reset your password:</p>
                     
@@ -78,7 +78,7 @@ def send_reset_email(user, reset_token):
                     <p>If you're having trouble with the button above, you can also reset your password by logging into your account and going to Settings.</p>
                 </div>
                 <div class="footer">
-                    <p>© 2024 JACS Property Management. All rights reserved.</p>
+                    <p>© 2024 PMS Property Management System. All rights reserved.</p>
                     <p>This is an automated message, please do not reply to this email.</p>
                 </div>
             </div>
@@ -95,7 +95,7 @@ def send_reset_email(user, reset_token):
         
         # Create and send email
         msg = Message(
-            subject='Password Reset - JACS Property Management',
+            subject='Password Reset - PMS Property Management System',
             recipients=[user.email],
             html=html_content,
             sender=current_app.config['MAIL_DEFAULT_SENDER']
