@@ -91,7 +91,6 @@ jobs:
             # SECURITY
             echo "BCRYPT_LOG_ROUNDS=12" >> .env.prod
             echo "RATE_LIMIT_STORAGE_URL=${{ secrets.RATE_LIMIT_STORAGE_URL }}" >> .env.prod
-            echo "CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}" >> .env.prod
 
             # EMAIL
             echo "MAIL_SERVER=${{ secrets.MAIL_SERVER }}" >> .env.prod
