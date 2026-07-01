@@ -672,11 +672,10 @@ def assign_tenant_to_property(current_user):
                 
                 if tenant_profile_id:
                     existing_tenant_unit = db.session.execute(text(
-                        "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid AND property_id = :pid"
+                        "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid"
                     ), { 
                         'tid': tenant_profile_id, 
-                        'uid': unit_id,
-                        'pid': property_id
+                        'uid': unit_id
                     }).first()
                     
                     move_in_date = contract.start_date
@@ -716,11 +715,10 @@ def assign_tenant_to_property(current_user):
                         try:
                             db.session.execute(text(
                                 """
-                                INSERT INTO tenant_units (property_id, tenant_id, unit_id, move_in_date, move_out_date, rent_start_date, rent_end_date, monthly_rent, security_deposit, created_at, updated_at)
-                                VALUES (:property_id, :tenant_profile_id, :unit_id, :move_in, :move_out, :rent_start, :rent_end, :rent, :deposit, NOW(), NOW())
+                                INSERT INTO tenant_units (tenant_id, unit_id, move_in_date, move_out_date, rent_start_date, rent_end_date, monthly_rent, security_deposit, created_at, updated_at)
+                                VALUES (:tenant_profile_id, :unit_id, :move_in, :move_out, :rent_start, :rent_end, :rent, :deposit, NOW(), NOW())
                                 """
                             ), { 
-                                'property_id': property_id,
                                 'tenant_profile_id': tenant_profile_id,
                                 'unit_id': unit_id,
                                 'move_in': move_in_date,
@@ -734,11 +732,10 @@ def assign_tenant_to_property(current_user):
                             current_app.logger.warning(f"rent_start_date/rent_end_date columns may not exist, using move dates only: {str(rent_dates_error)}")
                             db.session.execute(text(
                                 """
-                                INSERT INTO tenant_units (property_id, tenant_id, unit_id, move_in_date, move_out_date, monthly_rent, security_deposit, created_at, updated_at)
-                                VALUES (:property_id, :tenant_profile_id, :unit_id, :move_in, :move_out, :rent, :deposit, NOW(), NOW())
+                                INSERT INTO tenant_units (tenant_id, unit_id, move_in_date, move_out_date, monthly_rent, security_deposit, created_at, updated_at)
+                                VALUES (:tenant_profile_id, :unit_id, :move_in, :move_out, :rent, :deposit, NOW(), NOW())
                                 """
                             ), { 
-                                'property_id': property_id,
                                 'tenant_profile_id': tenant_profile_id,
                                 'unit_id': unit_id,
                                 'move_in': move_in_date,
@@ -749,11 +746,10 @@ def assign_tenant_to_property(current_user):
                         db.session.flush()
                         
                         tenant_unit_result = db.session.execute(text(
-                            "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid AND property_id = :pid ORDER BY created_at DESC LIMIT 1"
+                            "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid ORDER BY created_at DESC LIMIT 1"
                         ), {
                             'tid': tenant_profile_id,
-                            'uid': unit_id,
-                            'pid': property_id
+                            'uid': unit_id
                         }).first()
                         
                         tenant_unit_id = tenant_unit_result[0] if tenant_unit_result else None
@@ -830,11 +826,10 @@ def assign_tenant_to_property(current_user):
             if tenant_profile_check:
                 tenant_profile_id_check = tenant_profile_check[0]
                 tenant_unit_check = db.session.execute(text(
-                    "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid AND property_id = :pid"
+                    "SELECT id FROM tenant_units WHERE tenant_id = :tid AND unit_id = :uid"
                 ), { 
                     'tid': tenant_profile_id_check, 
-                    'uid': unit_id,
-                    'pid': property_id
+                    'uid': unit_id
                 }).first()
                 tenant_unit_created = tenant_unit_check is not None
                 if tenant_unit_created:
