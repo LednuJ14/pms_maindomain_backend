@@ -46,11 +46,13 @@ class NotificationService:
                 INSERT INTO notifications (
                     user_id, notification_type, title, message, 
                     related_entity_id, related_entity_type,
-                    is_read, is_deleted, created_at
+                    is_read, is_deleted, created_at, updated_at,
+                    recipient_type, priority
                 ) VALUES (
                     :user_id, :notification_type, :title, :message,
                     :related_entity_id, :related_entity_type,
-                    :is_read, :is_deleted, NOW()
+                    :is_read, :is_deleted, NOW(), NOW(),
+                    :recipient_type, :priority
                 )
             """)
             
@@ -62,7 +64,9 @@ class NotificationService:
                 'related_entity_id': related_id,
                 'related_entity_type': related_type,
                 'is_read': False,
-                'is_deleted': False
+                'is_deleted': False,
+                'recipient_type': 'tenant', # Default to tenant for now since this handles tenant notifications
+                'priority': 'normal'
             })
             
             db.session.commit()
