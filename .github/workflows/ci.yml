@@ -72,20 +72,50 @@ jobs:
             rm -f .env.prod
             touch .env.prod
 
-            # DATABASE VARS - GENERAL MODULE
-            echo "GENERAL_DB_HOST=${{ secrets.GENERAL_DB_HOST }}" >> .env.prod
-            echo "GENERAL_DB_PORT=${{ secrets.GENERAL_DB_PORT }}" >> .env.prod
-            echo "GENERAL_DB_USERNAME=${{ secrets.GENERAL_DB_USERNAME }}" >> .env.prod
-            echo "GENERAL_DB_PASSWORD=${{ secrets.GENERAL_DB_PASSWORD }}" >> .env.prod
-            echo "GENERAL_DB_DATABASE=${{ secrets.GENERAL_DB_DATABASE }}" >> .env.prod
+            # FLASK
+            echo "FLASK_ENV=production" >> .env.prod
+            echo "SECRET_KEY=${{ secrets.SECRET_KEY }}" >> .env.prod
 
-            # JWT SECRETS
-            echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env.prod
-            echo "JWT_EXPIRES_IN=${{ secrets.JWT_EXPIRES_IN }}" >> .env.prod
+            # DATABASE (MySQL)
+            echo "MYSQL_HOST=${{ secrets.MYSQL_HOST }}" >> .env.prod
+            echo "MYSQL_PORT=${{ secrets.MYSQL_PORT }}" >> .env.prod
+            echo "MYSQL_USER=${{ secrets.MYSQL_USER }}" >> .env.prod
+            echo "MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env.prod
+            echo "MYSQL_DATABASE=${{ secrets.MYSQL_DATABASE }}" >> .env.prod
 
-            # FIREBASE
-            printf 'FIREBASE_SERVICE_ACCOUNT_JSON=%s\n' '${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}' >> .env.prod
-            echo "FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}" >> .env.prod
+            # JWT
+            echo "JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}" >> .env.prod
+            echo "JWT_ACCESS_TOKEN_EXPIRES=${{ secrets.JWT_ACCESS_TOKEN_EXPIRES }}" >> .env.prod
+            echo "JWT_REFRESH_TOKEN_EXPIRES=${{ secrets.JWT_REFRESH_TOKEN_EXPIRES }}" >> .env.prod
+
+            # SECURITY
+            echo "BCRYPT_LOG_ROUNDS=12" >> .env.prod
+            echo "RATE_LIMIT_STORAGE_URL=${{ secrets.RATE_LIMIT_STORAGE_URL }}" >> .env.prod
+            echo "CORS_ORIGINS=${{ secrets.CORS_ORIGINS }}" >> .env.prod
+
+            # EMAIL
+            echo "MAIL_SERVER=${{ secrets.MAIL_SERVER }}" >> .env.prod
+            echo "MAIL_PORT=${{ secrets.MAIL_PORT }}" >> .env.prod
+            echo "MAIL_USE_TLS=True" >> .env.prod
+            echo "MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}" >> .env.prod
+            echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> .env.prod
+
+            # FILE UPLOADS
+            echo "MAX_CONTENT_LENGTH=16777216" >> .env.prod
+            echo "UPLOAD_FOLDER=uploads" >> .env.prod
+            echo "ALLOWED_EXTENSIONS=jpg,jpeg,png,gif,pdf" >> .env.prod
+
+            # PAGINATION
+            echo "DEFAULT_PAGE_SIZE=10" >> .env.prod
+            echo "MAX_PAGE_SIZE=100" >> .env.prod
+
+            # STRIPE
+            echo "STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_PUBLISHABLE_KEY }}" >> .env.prod
+            echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> .env.prod
+            echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env.prod
+
+            # FRONTEND URL
+            echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> .env.prod
 
             # CI/CD Metadata
             echo "APP_VERSION=${{ env.IMAGE_TAG }}" >> .env.prod
