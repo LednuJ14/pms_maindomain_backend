@@ -92,11 +92,11 @@ class Config:
     _db_url = os.environ.get('DATABASE_URL')
     if not _db_url:
         # Build from components
-        db_user = os.environ.get('MYSQL_USER', 'root')
-        db_password = os.environ.get('MYSQL_PASSWORD', 'password')
-        db_host = os.environ.get('MYSQL_HOST', 'localhost')
-        db_port = os.environ.get('MYSQL_PORT', '3306')
-        db_name = os.environ.get('MYSQL_DATABASE', 'property_mngmnt')
+        db_user = os.environ.get('MYSQL_USER', 'property_mgmt_2026')
+        db_password = os.environ.get('MYSQL_PASSWORD', 'property2026')
+        db_host = os.environ.get('MYSQL_HOST', 'siquijor-db-do-user-12791289-0.j.db.ondigitalocean.com')
+        db_port = os.environ.get('MYSQL_PORT', '25060')
+        db_name = os.environ.get('MYSQL_DATABASE', 'property_mgmt')
         _db_url = f"mysql+pymysql://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
     SQLALCHEMY_DATABASE_URI = _db_url
     

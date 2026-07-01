@@ -14,7 +14,7 @@ def ensure_user(email: str, password: str, role: UserRole, first_name: str, last
         if not user.email_verified:
             user.email_verified = True
         db.session.commit()
-        print(f"✓ User already exists: {normalized_email} (role={user.role.value}, status={user.status.value})")
+        print(f"[OK] User already exists: {normalized_email} (role={user.role.value}, status={user.status.value})")
         return user
 
     user = User(
@@ -39,7 +39,7 @@ def main() -> None:
         print("Initializing database (non-destructive)...")
 
         ensure_user(
-            email="admin@pms-cebu.com",
+            email="admin@pms.com",
             password="Admin123!",
             role=UserRole.ADMIN,
             first_name="System",
@@ -47,7 +47,7 @@ def main() -> None:
         )
 
         ensure_user(
-            email="manager@example.com",
+            email="manager@pms.com",
             password="Manager123!",
             role=UserRole.MANAGER,
             first_name="Demo",
@@ -55,7 +55,7 @@ def main() -> None:
         )
 
         ensure_user(
-            email="tenant@example.com",
+            email="tenant@pms.com",
             password="Tenant123!",
             role=UserRole.TENANT,
             first_name="Demo",
